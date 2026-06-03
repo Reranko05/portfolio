@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Star, GitFork, ExternalLink, Clock, ArrowRight } from "lucide-react";
 import { getFeaturedProjects } from "@/lib/data/projects";
 import { LanguageDot } from "@/components/shared/SkillBadge";
+import GitHubRepoBadge from '@/components/github/GitHubRepoBadge'
 import { SectionHeader } from "@/components/shared/SectionHeader";
 import { getRelativeTime } from "@/lib/utils";
 
@@ -98,14 +99,7 @@ function ProjectCard({
       <div className="flex items-center justify-between mt-auto pt-2" style={{ borderTop: "1px solid var(--color-gh-border-muted)" }}>
         <div className="flex items-center gap-3">
           <LanguageDot name={project.language} color={project.languageColor} />
-          <span className="flex items-center gap-1 text-xs" style={{ color: "var(--color-gh-text-muted)" }}>
-            <Star size={12} />
-            {project.stars}
-          </span>
-          <span className="flex items-center gap-1 text-xs" style={{ color: "var(--color-gh-text-muted)" }}>
-            <GitFork size={12} />
-            {project.forks}
-          </span>
+          <GitHubRepoBadge githubUrl={project.githubUrl} />
         </div>
         <div className="flex items-center gap-1 text-xs" style={{ color: "var(--color-gh-text-subtle)" }}>
           <Clock size={11} />
