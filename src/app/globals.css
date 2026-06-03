@@ -2,34 +2,36 @@
 
 /* ─── GitHub-Inspired Design Tokens ─────────────────────────────────────── */
 @theme inline {
-  /* Canvas / backgrounds */
-  --color-gh-canvas:          #0d1117;
-  --color-gh-surface:         #161b22;
+  /* Canvas / backgrounds (kept dark) */
+  --color-gh-canvas:          #0D1117; /* Page background */
+  --color-gh-surface:         #161B22; /* Card / surface */
   --color-gh-elevated:        #21262d;
   --color-gh-overlay:         #2d333b;
 
   /* Borders */
-  --color-gh-border:          #30363d;
+  --color-gh-border:          #30363D;
   --color-gh-border-muted:    #21262d;
 
-  /* Text */
-  --color-gh-text:            #e6edf3;
-  --color-gh-text-muted:      #7d8590;
-  --color-gh-text-subtle:     #6e7681;
+  /* Text (new hierarchy) */
+  --color-gh-text:            #F0F6FC; /* Primary text / brand white */
+  --color-gh-text-muted:      #8B949E; /* Secondary text */
+  --color-gh-text-subtle:     #6E7681; /* Muted / subtle text */
 
-  /* Accent colors */
-  --color-gh-accent:          #58a6ff;
-  --color-gh-accent-muted:    #388bfd26;
-  --color-gh-accent-emphasis: #1f6feb;
+  /* Accent system (primary identity = white; OSS purple for small accents) */
+  --color-gh-accent:          #F0F6FC; /* Primary brand color (used for key UI emphasis) */
+  --color-gh-accent-muted:    #F0F6FC26; /* subtle overlay of accent */
+  --color-gh-accent-emphasis: #8957E5; /* OSS purple for badges / callouts */
 
   /* Status colors */
-  --color-gh-success:         #3fb950;
-  --color-gh-success-muted:   #2ea04326;
-  --color-gh-warning:         #d29922;
-  --color-gh-warning-muted:   #d2992226;
+  --color-gh-success:         #56D364; /* success */
+  --color-gh-success-muted:   #56D36426;
+  --color-gh-warning:         #D29922; /* amber (use sparingly) */
+  --color-gh-warning-muted:   #D2992226;
   --color-gh-danger:          #f85149;
   --color-gh-danger-muted:    #f8514926;
-  --color-gh-purple:          #bc8cff;
+
+  /* Misc / semantic */
+  --color-gh-purple:          #8957E5; /* OSS purple alias */
   --color-gh-orange:          #f78166;
 
   /* Typography */
