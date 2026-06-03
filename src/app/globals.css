@@ -1,0 +1,205 @@
+@import "tailwindcss";
+
+/* ─── GitHub-Inspired Design Tokens ─────────────────────────────────────── */
+@theme inline {
+  /* Canvas / backgrounds */
+  --color-gh-canvas:          #0d1117;
+  --color-gh-surface:         #161b22;
+  --color-gh-elevated:        #21262d;
+  --color-gh-overlay:         #2d333b;
+
+  /* Borders */
+  --color-gh-border:          #30363d;
+  --color-gh-border-muted:    #21262d;
+
+  /* Text */
+  --color-gh-text:            #e6edf3;
+  --color-gh-text-muted:      #7d8590;
+  --color-gh-text-subtle:     #6e7681;
+
+  /* Accent colors */
+  --color-gh-accent:          #58a6ff;
+  --color-gh-accent-muted:    #388bfd26;
+  --color-gh-accent-emphasis: #1f6feb;
+
+  /* Status colors */
+  --color-gh-success:         #3fb950;
+  --color-gh-success-muted:   #2ea04326;
+  --color-gh-warning:         #d29922;
+  --color-gh-warning-muted:   #d2992226;
+  --color-gh-danger:          #f85149;
+  --color-gh-danger-muted:    #f8514926;
+  --color-gh-purple:          #bc8cff;
+  --color-gh-orange:          #f78166;
+
+  /* Typography */
+  --font-sans:   var(--font-inter);
+  --font-mono:   var(--font-jetbrains);
+
+  /* Radius */
+  --radius-sm:  4px;
+  --radius-md:  6px;
+  --radius-lg:  8px;
+}
+
+/* ─── Base Reset ─────────────────────────────────────────────────────────── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  color-scheme: dark;
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--color-gh-canvas);
+  color: var(--color-gh-text);
+  font-family: var(--font-sans), system-ui, sans-serif;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ─── Typography ─────────────────────────────────────────────────────────── */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--color-gh-text);
+}
+
+a {
+  color: var(--color-gh-accent);
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+code,
+kbd,
+samp,
+pre {
+  font-family: var(--font-mono), 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 0.875em;
+}
+
+/* ─── Scrollbar ──────────────────────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-gh-canvas);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-gh-border);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-gh-text-subtle);
+}
+
+/* ─── Selection ──────────────────────────────────────────────────────────── */
+::selection {
+  background: var(--color-gh-accent-muted);
+  color: var(--color-gh-text);
+}
+
+/* ─── Focus Styles ───────────────────────────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid var(--color-gh-accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ─── Prose Styles (for Blog Articles) ─────────────────────────────────── */
+.prose {
+  color: var(--color-gh-text);
+  max-width: 72ch;
+}
+
+.prose h1 { font-size: 2rem; margin-top: 0; margin-bottom: 1rem; }
+.prose h2 { font-size: 1.5rem; margin-top: 2rem; margin-bottom: 0.75rem; padding-bottom: 0.4rem; border-bottom: 1px solid var(--color-gh-border); }
+.prose h3 { font-size: 1.25rem; margin-top: 1.5rem; margin-bottom: 0.5rem; }
+.prose h4 { font-size: 1rem; margin-top: 1.25rem; margin-bottom: 0.5rem; }
+
+.prose p { margin-top: 0; margin-bottom: 1rem; }
+
+.prose a {
+  color: var(--color-gh-accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.prose strong { color: var(--color-gh-text); font-weight: 600; }
+.prose em { color: var(--color-gh-text-muted); }
+
+.prose ul,
+.prose ol {
+  margin-bottom: 1rem;
+  padding-left: 1.5rem;
+}
+
+.prose li { margin-bottom: 0.25rem; }
+
+.prose blockquote {
+  border-left: 3px solid var(--color-gh-accent);
+  padding-left: 1rem;
+  margin: 1.5rem 0;
+  color: var(--color-gh-text-muted);
+  font-style: italic;
+}
+
+.prose hr {
+  border: none;
+  border-top: 1px solid var(--color-gh-border);
+  margin: 2rem 0;
+}
+
+/* ─── Code Blocks (rehype-pretty-code) ──────────────────────────────────── */
+.prose pre {
+  background: var(--color-gh-surface) !important;
+  border: 1px solid var(--color-gh-border);
+  border-radius: var(--radius-md);
+  padding: 1rem 1.25rem;
+  overflow-x: auto;
+  margin: 1.25rem 0;
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+
+.prose code:not(pre code) {
+  background: var(--color-gh-elevated);
+  border: 1px solid var(--color-gh-border);
+  border-radius: 4px;
+  padding: 0.15em 0.4em;
+  font-size: 0.875em;
+  color: var(--color-gh-orange);
+}
+
+pre [data-line] {
+  padding: 0 1.25rem;
+}
+
+[data-highlighted-line] {
+  background: var(--color-gh-accent-muted);
+  border-left: 2px solid var(--color-gh-accent);
+}
+
+/* ─── Contribution Heatmap ───────────────────────────────────────────────── */
+.heatmap-cell {
+  transition: opacity 0.1s ease;
+}
+
+.heatmap-cell:hover {
+  opacity: 0.75;
+  cursor: default;
+}

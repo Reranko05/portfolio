@@ -1,0 +1,114 @@
+---
+title: "My Apache Arrow PR Journey: From Bug Report to Merged Fix"
+description: "How I found an off-by-one error deep in Apache Arrow's BitmapReader, navigated the contributor process, and got my first major OSS PR merged."
+date: "2025-04-22"
+tags: ["Open Source", "C++", "Apache Arrow", "OSS"]
+readingTime: "12 min read"
+featured: true
+coverImage: "/images/blog/arrow-pr.png"
+---
+
+Getting your first substantial PR merged into a major open source project is a rite of passage. Mine happened to be in [Apache Arrow](https://arrow.apache.org/) — a project used by Pandas, Spark, DuckDB, and half the data infrastructure industry. Here's the full story.
+
+## How It Started
+
+I was working on Zoqik's columnar storage engine, reading Arrow's C++ codebase to understand how they handle null bitmaps. I was reading `arrow/util/bit_util.h` when I noticed something odd in `BitmapReader::NextWord()`:
+
+```cpp
+uint64_t BitmapReader::NextWord() const {
+  uint64_t word = 0;
+  // Reads 8 bytes from bitmap_
+  memcpy(&word, bitmap_ + byte_offset_, 8);
+  return word;
+}
+```
+
+The issue: this function assumes there are always at least 8 bytes remaining in the buffer. It checks `bit_offset_` but not whether `byte_offset_ + 8 <= length_`. If the bitmap length is an exact multiple of 8 bytes, this reads past the end of the allocation.
+
+## Reproducing the Bug
+
+Reproducing it was trickier than spotting it. The bug only triggered when:
+
+1. The bitmap length in bytes was exactly a multiple of 8 (e.g., 8, 16, 64...)
+2. `NextWord()` was called when positioned exactly at the last word boundary
+
+I wrote a minimal reproducer:
+
+```cpp
+#include "arrow/util/bitmap.h"
+#include "arrow/buffer.h"
+
+void ReproduceBug() {
+  // 8 bytes = 64 bits exactly
+  auto buf = *arrow::AllocateBuffer(8);
+  memset(buf->mutable_data(), 0xFF, 8);
+
+  arrow::internal::BitmapReader reader(buf->data(), /*start_offset=*/0, /*length=*/64);
+
+  // Advance to the last position
+  for (int i = 0; i < 63; ++i) reader.Next();
+
+  // This triggers the OOB read
+  reader.NextWord();  // Reads buf->data() + 8 — past allocation!
+}
+```
+
+Running this under ASan confirmed the out-of-bounds read immediately.
+
+## Filing the Issue
+
+I opened [GH-38421](https://github.com/apache/arrow/issues/38421) with:
+
+- A clear title: `[C++] BitmapReader::NextWord() has OOB read when bitmap length is multiple of 64 bits`
+- The minimal reproducer
+- The ASan output
+- The exact code path
+
+The maintainers responded within 6 hours. One of them, Weston Pace, confirmed the bug and tagged it `good-first-pr`. That was my cue to write the fix.
+
+## The Fix
+
+The fix was straightforward: use a masked final word when fewer than 8 bytes remain:
+
+```cpp
+uint64_t BitmapReader::NextWord() const {
+  uint64_t word = 0;
+  const int64_t bytes_remaining = (length_ - bit_offset_ + 7) / 8;
+
+  if (ARROW_PREDICT_TRUE(bytes_remaining >= 8)) {
+    memcpy(&word, bitmap_ + byte_offset_, 8);
+  } else {
+    // Partial final word — only copy what's valid
+    memcpy(&word, bitmap_ + byte_offset_, bytes_remaining);
+  }
+  return word;
+}
+```
+
+I also added a regression test to `arrow/util/bitmap_test.cc` covering the exact boundary condition.
+
+## The Review Process
+
+Arrow uses GitHub PRs with a rigorous review process. My PR ([#38497](https://github.com/apache/arrow/pull/38497)) went through three rounds of review:
+
+**Round 1**: Style nits. Arrow enforces `ARROW_PREDICT_TRUE` for likely branches, which I'd missed. Also, the test needed to be in a specific GTest fixture.
+
+**Round 2**: A maintainer asked whether `bytes_remaining` could ever be 0, and if so, what should `NextWord()` return. I added a DCHECK and a comment explaining the invariant.
+
+**Round 3**: Green CI, approvals from two maintainers. Merged.
+
+## What I Learned
+
+**1. Read before writing.** I spent a week reading Arrow's codebase before writing a single line of my fix. Understanding the invariants of `BitmapReader` was what made the fix correct, not just syntactically plausible.
+
+**2. The reproducer is half the PR.** Maintainers want to be able to verify the fix works, not just trust that you're right. A runnable reproducer is worth a thousand words.
+
+**3. Be patient with review cycles.** Major projects have style guides, CI requirements, and specific patterns. The three-round review cycle felt slow, but each round made the code better.
+
+**4. Talk in the issue before the PR.** Confirming my intended approach in the issue before writing code saved me from going down a wrong path (I had initially planned a more invasive change to the class invariants).
+
+## What's Next
+
+I'm now looking at [GH-39102](https://github.com/apache/arrow/issues/39102) — an integer overflow in the IPC flatbuffer serialization for very large RecordBatches. Same process: reproduce, investigate, discuss, then fix.
+
+The Arrow codebase is one of the cleanest C++ projects I've read. If you're looking to level up your C++ skills by reading production-grade systems code, there's no better place to start.

@@ -1,0 +1,144 @@
+---
+title: "Debugging a Flaky CI Failure in a Distributed Test Suite"
+description: "The 8-hour war story of tracking down a non-deterministic test failure that only appeared on GitHub Actions, never locally."
+date: "2025-03-14"
+tags: ["DevOps", "Testing", "CI/CD", "Debugging"]
+readingTime: "7 min read"
+featured: false
+coverImage: "/images/blog/ci-debug.png"
+---
+
+There's a special kind of madness that comes from a test that fails 1 in 20 runs, only on CI, always in the same file, never with a consistent error message.
+
+This is the story of that test — and the 8 hours I spent hunting it down.
+
+## The Setup
+
+We had an integration test suite for a distributed task queue. Tests spun up multiple worker goroutines, submitted tasks, and asserted that all tasks completed within a timeout. Locally, on my M2 MacBook: green, always, every run. On GitHub Actions (ubuntu-latest, 2 CPU): red, unpredictably.
+
+The failure looked like this:
+
+```
+--- FAIL: TestWorkerPool/concurrent_submissions (45.12s)
+    queue_test.go:187: expected 100 tasks completed, got 97
+```
+
+97 out of 100. Never 100. Never 0. Always that infuriating 97-99 range.
+
+## Investigation Phase 1: Reproducing Locally
+
+The first rule of debugging flaky tests: make it fail locally. I can't fix what I can't reproduce.
+
+I used two strategies:
+
+**Strategy 1: Stress the scheduler**
+
+```bash
+# Run the test 100 times, stop on first failure
+for i in $(seq 1 100); do
+  go test -run TestWorkerPool/concurrent_submissions -count=1 ./... || break
+  echo "Run $i: OK"
+done
+```
+
+After 87 runs: still green locally.
+
+**Strategy 2: Simulate CI constraints**
+
+CI machines are slow. Two vCPUs, noisy neighbors, thermal throttling. I tried constraining my local run:
+
+```bash
+# Limit to 2 CPUs
+GOMAXPROCS=2 go test -race ./... -count=50
+```
+
+Run 14: **red**. The test failed. Different error count (98 this time), same symptom.
+
+## Investigation Phase 2: Reading the Test
+
+Now I could reproduce it. Time to actually read the test code.
+
+```go
+func TestWorkerPool_ConcurrentSubmissions(t *testing.T) {
+  pool := NewWorkerPool(4)
+  pool.Start()
+  defer pool.Stop()
+
+  var completed int64
+  var wg sync.WaitGroup
+
+  for i := 0; i < 100; i++ {
+    wg.Add(1)
+    pool.Submit(func() {
+      atomic.AddInt64(&completed, 1)
+      wg.Done()
+    })
+  }
+
+  // Wait for all tasks with a timeout
+  done := make(chan struct{})
+  go func() {
+    wg.Wait()
+    close(done)
+  }()
+
+  select {
+  case <-done:
+  case <-time.After(30 * time.Second):
+    t.Fatalf("timeout waiting for tasks")
+  }
+
+  assert.Equal(t, int64(100), atomic.LoadInt64(&completed))
+}
+```
+
+Spot the bug?
+
+I stared at this for 20 minutes before I saw it. The test calls `pool.Stop()` via `defer` — which runs **immediately after the function returns**, potentially *before* all tasks complete.
+
+The sequence on a slow machine:
+
+1. All 100 tasks submitted ✓
+2. `wg.Wait()` waits for all tasks ✓  
+3. `done` channel closed ✓
+4. Test function returns
+5. `defer pool.Stop()` runs — kills remaining goroutines mid-task
+6. `atomic.AddInt64` never runs for 1-3 tasks
+
+But wait — if `wg.Wait()` completes, shouldn't all `wg.Done()` calls have run? Yes, but `wg.Done()` and `atomic.AddInt64` happen in that order — the wait group signals *before* the counter increments.
+
+## The Fix
+
+Move the counter increment *before* the wait group signal:
+
+```go
+pool.Submit(func() {
+  atomic.AddInt64(&completed, 1)  // increment first
+  wg.Done()                        // then signal
+})
+```
+
+Simple. Two lines. Eight hours.
+
+## What I Learned
+
+**1. Flaky tests are real bugs.** "It's just a flaky test" is a cop-out. Flaky tests indicate either a real race condition in production code or incorrect test assumptions. Neither is acceptable to ignore.
+
+**2. Reproduce before you investigate.** I wasted two hours reading the code before I could reproduce the failure. Invert this: reproduce first, then the bug often becomes obvious.
+
+**3. GOMAXPROCS=2 is a flaky test's natural habitat.** Most flaky concurrency tests hide behind fast multi-core machines. Constrain your runtime, then the bugs surface.
+
+**4. The `-race` flag is not optional.** Running with `go test -race` should be default in CI. It caught a separate data race in an adjacent test that I fixed as a bonus.
+
+## The Aftermath
+
+I added this to our CI pipeline:
+
+```yaml
+- name: Run tests (race detector, constrained parallelism)
+  env:
+    GOMAXPROCS: 2
+  run: go test -race -count=3 ./...
+```
+
+Running the suite 3 times with the race detector enabled, on constrained parallelism. If a test is flaky, it *will* show up here. The build time went from 45s to 2m30s — a trade I'll take every time.

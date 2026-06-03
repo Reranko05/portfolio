@@ -1,0 +1,134 @@
+---
+title: "Building a RESP Parser in C++ from Scratch"
+description: "A deep dive into implementing the Redis Serialization Protocol parser in C++17 — from byte streams to typed commands."
+date: "2025-05-10"
+tags: ["C++", "Systems", "Redis", "Networking"]
+readingTime: "9 min read"
+featured: true
+coverImage: "/images/blog/resp-parser.png"
+---
+
+When I started building Zoqik — my Redis-compatible in-memory database server — the very first thing I needed was a RESP (Redis Serialization Protocol) parser. It turns out, parsing a protocol correctly is significantly harder than parsing it *mostly* correctly.
+
+This post is the story of building that parser: the design, the edge cases, and the lessons learned about writing robust, zero-copy parsers in modern C++.
+
+## What Is RESP?
+
+RESP is the wire protocol used by Redis. It's text-based, line-delimited, and deliberately simple. A client sends a command as an array of bulk strings, and the server responds with one of several types:
+
+```
+*3\r\n          ← Array of 3 elements
+$3\r\n          ← Bulk string, length 3
+SET\r\n
+$3\r\n
+key\r\n
+$5\r\n
+value\r\n
+```
+
+The `*` prefix indicates an array, `$` a bulk string, `+` a simple string, `-` an error, and `:` an integer. Simple, right?
+
+Famous last words.
+
+## The Naive Approach
+
+My first implementation was a straightforward state machine that read the incoming byte stream character by character:
+
+```cpp
+class RespParser {
+ public:
+  ParseResult parse(std::string_view data) {
+    for (char c : data) {
+      switch (state_) {
+        case State::kStart:
+          if (c == '*') state_ = State::kArrayLen;
+          break;
+        // ...
+      }
+    }
+  }
+};
+```
+
+This worked for clean, complete messages. It completely fell apart when a message arrived in multiple TCP segments — which, in a real network, happens constantly.
+
+## The Actual Problem: Partial Reads
+
+TCP is a stream protocol. There is no guarantee that a single `recv()` call gives you a complete RESP message. You might get:
+
+```
+*3\r\n$3\r\nSET
+```
+
+...and the rest arrives on the next read. Your parser needs to handle this gracefully, buffering incomplete state without blocking.
+
+The fix was to stop thinking of the parser as a function that consumes a buffer and instead think of it as a **coroutine** that can be suspended mid-parse and resumed with more data.
+
+## The Span-Based, Zero-Copy Design
+
+The final design uses a `std::span<const char>` view over the incoming buffer. The parser tracks a `cursor_` position and returns a `ParseResult` that is either:
+
+- `Complete(RespValue)` — successfully parsed a full value
+- `Incomplete` — need more data, cursor hasn't moved
+- `Error(std::string)` — malformed input
+
+```cpp
+struct ParseResult {
+  enum class Tag { Complete, Incomplete, Error };
+  Tag tag;
+  RespValue value;    // valid when Complete
+  std::string error;  // valid when Error
+  size_t consumed;    // bytes consumed from input
+};
+```
+
+The caller is responsible for managing the buffer: it appends new data, calls `parse()`, and if `Complete`, advances its own cursor by `consumed` bytes.
+
+## Handling Integer Parsing Safely
+
+One subtle bug I hit: RESP integers can be negative (for error codes), but I was using `strtoull` which silently wraps on negative input:
+
+```cpp
+// BUG: strtoull("-1") on 64-bit returns ULLONG_MAX
+int64_t n = strtoull(str, &end, 10);
+
+// FIX: use strtoll and check for errno
+errno = 0;
+int64_t n = strtoll(str, &end, 10);
+if (errno == ERANGE) return ParseResult::Error("integer overflow");
+```
+
+Always check `errno` after `strtoll`. Always.
+
+## Testing Strategy
+
+I tested the parser with three categories of inputs:
+
+1. **Happy path** — Valid RESP messages of all types
+2. **Partial reads** — Messages split at every possible byte boundary
+3. **Malformed input** — Missing `\r\n`, wrong lengths, nested arrays exceeding depth limit
+
+The partial read tests were generated programmatically:
+
+```cpp
+TEST(RespParser, HandlesAllSplitPoints) {
+  const std::string msg = "*2\r\n$4\r\nPING\r\n$4\r\ntest\r\n";
+  for (size_t split = 1; split < msg.size(); ++split) {
+    RespParser parser;
+    auto r1 = parser.feed(msg.substr(0, split));
+    EXPECT_EQ(r1.tag, ParseResult::Tag::Incomplete);
+    auto r2 = parser.feed(msg.substr(split));
+    EXPECT_EQ(r2.tag, ParseResult::Tag::Complete);
+  }
+}
+```
+
+This single test caught four separate bugs in my first implementation.
+
+## Lessons Learned
+
+- **Never assume TCP delivers complete messages.** If your parser can't handle mid-message splits, it will fail in production.
+- **Zero-copy with `std::span` is worth the complexity.** Avoiding allocations in the hot path mattered for Zoqik's latency targets.
+- **Fuzz testing catches what unit tests miss.** I added libFuzzer integration later and found two more edge cases within an hour.
+
+The full parser is open source in the [Zoqik repository](https://github.com/Reranko05/zoqik). If you're building anything that speaks Redis, it's MIT licensed — take it.
