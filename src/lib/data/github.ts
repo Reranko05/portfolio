@@ -44,19 +44,11 @@ function generateHeatmap(): ContributionWeek[] {
 
 export const githubStats: GitHubStats = {
   username: 'Reranko05',
-  stars: 119,
-  followers: 134,
-  following: 87,
-  publicRepos: 23,
-  totalCommits: 1847,
-  contributionWeeks: generateHeatmap(),
-  topLanguages: [
-    { name: 'C++', color: '#f34b7d', percentage: 42 },
-    { name: 'Java', color: '#b07219', percentage: 28 },
-    { name: 'Python', color: '#3572A5', percentage: 16 },
-    { name: 'Go', color: '#00add8', percentage: 9 },
-    { name: 'TypeScript', color: '#3178c6', percentage: 5 },
-  ],
+  // Placeholder mode: real-time GitHub statistics will be loaded via API integration
+  liveData: false,
+  placeholderMessage: 'Live GitHub statistics will be loaded through GitHub API integration.',
+  contributionWeeks: [],
+  topLanguages: [],
 }
 
 export function getGitHubStats(): GitHubStats {

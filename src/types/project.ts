@@ -8,8 +8,8 @@ export interface Project {
   technologies: string[]
   githubUrl: string
   demoUrl?: string
-  stars: number
-  forks: number
+  stars?: number
+  forks?: number
   lastUpdated: string
   featured: boolean
   topics: string[]

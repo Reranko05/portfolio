@@ -19,8 +19,10 @@ export interface OSSContribution {
 }
 
 export interface OSSStats {
-  prsOpened: number
-  prsMerged: number
-  issuesInvestigated: number
-  reposContributed: number
+  prsOpened?: number
+  prsMerged?: number
+  issuesInvestigated?: number
+  reposContributed?: number
+  liveData?: boolean
+  placeholderMessage?: string
 }

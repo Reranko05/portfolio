@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import type { Project } from "@/types/project";
 import { LanguageDot, SkillBadge } from "@/components/shared/SkillBadge";
+import GitHubRepoBadge from '@/components/github/GitHubRepoBadge'
 import { getRelativeTime } from "@/lib/utils";
 
 export function ProjectCard({ project }: { project: Project }) {
@@ -67,20 +68,7 @@ export function ProjectCard({ project }: { project: Project }) {
       >
         <div className="flex items-center gap-4">
           <LanguageDot name={project.language} color={project.languageColor} />
-          <span
-            className="flex items-center gap-1 text-xs"
-            style={{ color: "var(--color-gh-text-muted)" }}
-          >
-            <Star size={12} />
-            {project.stars}
-          </span>
-          <span
-            className="flex items-center gap-1 text-xs"
-            style={{ color: "var(--color-gh-text-muted)" }}
-          >
-            <GitFork size={12} />
-            {project.forks}
-          </span>
+          <GitHubRepoBadge githubUrl={project.githubUrl} />
         </div>
         <div
           className="flex items-center gap-1 text-xs"

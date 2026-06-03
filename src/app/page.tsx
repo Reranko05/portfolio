@@ -1,10 +1,10 @@
 import { ProfileSidebar } from "@/components/home/ProfileSidebar";
 import { ReadmeCard } from "@/components/home/ReadmeCard";
 import { FeaturedProjects } from "@/components/home/FeaturedProjects";
-import { OSSHighlight } from "@/components/home/OSSHighlight";
 import { RecentBlogPosts } from "@/components/home/RecentBlogPosts";
 import { GitHubActivity } from "@/components/home/GitHubActivity";
-import { LeetCodeStats } from "@/components/home/LeetCodeStats";
+import LeetCodeContributions from "@/components/home/LeetCodeContributions";
+import LeetCodeStats from "@/components/home/LeetCodeStats";
 import { features } from "@/lib/features";
 
 export default function HomePage() {
@@ -22,9 +22,9 @@ export default function HomePage() {
         <div className="flex-1 min-w-0 space-y-10">
           <ReadmeCard />
           <FeaturedProjects />
-          <OSSHighlight />
           <RecentBlogPosts />
           <GitHubActivity />
+          {features.SHOW_LEETCODE && <LeetCodeContributions />}
           {features.SHOW_LEETCODE && <LeetCodeStats />}
         </div>
       </div>

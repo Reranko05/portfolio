@@ -1,17 +1,8 @@
-import type { LeetCodeStats } from '@/types/github'
+import type { LeetCodeStats as LCStats } from '@/lib/leetcode'
+import { fetchLeetCodeData } from '@/lib/leetcode'
 
-export const leetcodeStats: LeetCodeStats = {
-  username: 'Reranko05',
-  totalSolved: 342,
-  easySolved: 120,
-  mediumSolved: 182,
-  hardSolved: 40,
-  contestRating: 1847,
-  globalRanking: 'Top 12%',
-  currentStreak: 47,
-  acceptanceRate: '68.3%',
-}
-
-export function getLeetCodeStats(): LeetCodeStats {
-  return leetcodeStats
+export async function getLeetCodeStats(): Promise<LCStats> {
+  const username = 'aadityasri03'
+  const res = await fetchLeetCodeData(username)
+  return res.stats
 }

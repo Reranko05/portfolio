@@ -1,58 +1,67 @@
 export const resumeData = {
   name: 'Aaditya Srinivasan',
   title: 'Backend Engineer',
-  location: 'India',
-  email: 'aaditya@example.com',
+  location: 'Ghaziabad, Uttar Pradesh, India',
+  email: '',
   github: 'github.com/Reranko05',
   linkedin: 'linkedin.com/in/aaditya-srinivasan',
 
   experience: [
     {
-      company: 'TechCorp Systems',
-      role: 'Backend Engineering Intern',
-      period: 'May 2025 – Jul 2025',
-      location: 'Bengaluru, India (Remote)',
+      company: 'Infosys Springboard',
+      role: 'Software Development Intern',
+      period: '2024',
+      location: 'Remote',
       bullets: [
-        'Designed and implemented a JWT-based authentication microservice in Spring Boot, reducing login latency by 34ms p99.',
-        'Migrated a legacy batch job to a Kafka-backed event streaming pipeline, improving throughput from 8K to 120K records/min.',
-        'Optimized 12 slow PostgreSQL queries using EXPLAIN ANALYZE; reduced dashboard load time by 1.8s.',
-        'Wrote integration tests covering 94% of the API surface using JUnit 5 and Testcontainers.',
+        'Worked on backend services and integrations using Java and Spring Boot.',
+        'Implemented API endpoints, added unit and integration tests, and collaborated with cross-functional teams.',
+        'Focused on correctness, observability, and maintainability of production code.',
       ],
     },
     {
-      company: 'OpenLab Research',
-      role: 'Systems Research Intern',
-      period: 'Dec 2024 – Feb 2025',
+      company: 'Apache Arrow (Open Source)',
+      role: 'Contributor',
+      period: '2024 – Present',
       location: 'Remote',
       bullets: [
-        'Contributed to a research prototype columnar store in C++; implemented a block-level LZ4 compression layer.',
-        'Benchmarked ingestion throughput against DuckDB and ClickHouse across 5 dataset profiles.',
-        'Wrote technical notes summarizing findings; shared as internal engineering memos.',
+        'Fixed an off-by-one bug in BitmapReader (PR #38497) which was merged to main.',
+        'Investigated IPC serialization edge cases and authored a fix currently under review (PR #39180).',
+        'Authored documentation improvements for ChunkedArray and added doctest-compatible examples (PR #37890).',
+      ],
+    },
+    {
+      company: 'Grafana k6 (Open Source)',
+      role: 'Contributor',
+      period: '2024',
+      location: 'Remote',
+      bullets: [
+        'Contributed fixes and tests to k6 for improved reliability in CI environments.',
+        'Collaborated with maintainers to triage issues and improve observability for test runs.',
       ],
     },
   ],
 
   education: [
     {
-      institution: 'Vellore Institute of Technology',
-      degree: 'B.Tech Computer Science & Engineering',
-      period: '2022 – 2026',
-      gpa: '8.9 / 10',
+      institution: 'SRM Institute of Science and Technology',
+      degree: 'B.Tech, Computer Science and Engineering',
+      period: '2023 – 2027',
+      gpa: '9.41 / 10',
       relevantCourses: ['Operating Systems', 'Database Systems', 'Computer Networks', 'Algorithms', 'Distributed Systems'],
     },
   ],
 
   skills: {
     languages: ['C++17', 'Java 21', 'Python 3', 'Go', 'SQL', 'TypeScript'],
-    backend: ['Spring Boot', 'REST APIs', 'JWT', 'gRPC', 'Kafka', 'Redis'],
-    databases: ['PostgreSQL', 'MySQL', 'ClickHouse', 'MongoDB'],
-    infrastructure: ['Docker', 'Kubernetes', 'AWS (EC2/S3/RDS)', 'GitHub Actions', 'Linux'],
-    tools: ['Git', 'CMake', 'Gradle', 'Postman', 'DataGrip'],
+    backend: ['Spring Boot', 'REST APIs', 'gRPC', 'Kafka', 'Redis'],
+    databases: ['PostgreSQL', 'ClickHouse', 'MySQL'],
+    infrastructure: ['Docker', 'Kubernetes', 'GitHub Actions', 'Linux'],
+    tools: ['Git', 'CMake', 'Gradle', 'DataGrip'],
   },
 
   ossHighlights: [
     { project: 'Apache Arrow', pr: '#38497', description: 'Fixed off-by-one in BitmapReader — merged to main.' },
-    { project: 'Apache Arrow', pr: '#36812', description: 'CSV reader performance — 18% memory reduction.' },
+    { project: 'Apache Arrow', pr: '#36812', description: 'CSV reader performance — memory reduction and throughput improvements.' },
     { project: 'Apache Arrow', pr: '#37890', description: 'ChunkedArray API docs with doctests — merged.' },
   ],
 }
