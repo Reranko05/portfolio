@@ -13,13 +13,12 @@ export function ProfileSidebar() {
           className="w-full max-w-[260px] aspect-square rounded-full overflow-hidden mx-auto md:mx-0"
           style={{ border: "1px solid var(--color-gh-border)" }}
         >
-          <Image
+          <img
             src={profile.avatar}
             alt={`${profile.name}'s profile picture`}
             width={260}
             height={260}
             className="w-full h-full object-cover"
-            priority
           />
         </div>
       </div>

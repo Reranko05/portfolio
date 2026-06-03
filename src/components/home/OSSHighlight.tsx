@@ -37,29 +37,35 @@ export function OSSHighlight() {
       />
 
       {/* Stats row */}
-      <div className="grid grid-cols-3 gap-3 mb-4">
-        {statItems.map((s) => (
-          <div
-            key={s.label}
-            className="flex flex-col items-center justify-center p-3 rounded-lg text-center"
-            style={{
-              backgroundColor: "var(--color-gh-surface)",
-              border: "1px solid var(--color-gh-border)",
-            }}
-          >
-            <span style={{ color: "var(--color-gh-text-muted)" }}>{s.icon}</span>
-            <span
-              className="text-xl font-bold font-mono mt-1"
-              style={{ color: "var(--color-gh-text)" }}
+      {stats.liveData === false ? (
+        <div className="py-6 text-center mb-4" style={{ color: 'var(--color-gh-text-muted)' }}>
+          {stats.placeholderMessage || 'Open-source contribution summaries will be available via integration.'}
+        </div>
+      ) : (
+        <div className="grid grid-cols-3 gap-3 mb-4">
+          {statItems.map((s) => (
+            <div
+              key={s.label}
+              className="flex flex-col items-center justify-center p-3 rounded-lg text-center"
+              style={{
+                backgroundColor: "var(--color-gh-surface)",
+                border: "1px solid var(--color-gh-border)",
+              }}
             >
-              {s.value}
-            </span>
-            <span className="text-xs mt-0.5" style={{ color: "var(--color-gh-text-muted)" }}>
-              {s.label}
-            </span>
-          </div>
-        ))}
-      </div>
+              <span style={{ color: "var(--color-gh-text-muted)" }}>{s.icon}</span>
+              <span
+                className="text-xl font-bold font-mono mt-1"
+                style={{ color: "var(--color-gh-text)" }}
+              >
+                {s.value}
+              </span>
+              <span className="text-xs mt-0.5" style={{ color: "var(--color-gh-text-muted)" }}>
+                {s.label}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Contribution previews */}
       <div className="space-y-2">

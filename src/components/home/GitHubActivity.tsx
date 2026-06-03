@@ -19,8 +19,16 @@ export function GitHubActivity() {
           border: "1px solid var(--color-gh-border)",
         }}
       >
-        <ContributionHeatmap weeks={stats.contributionWeeks} />
-        <RepoStats stats={stats} />
+        {stats.liveData === false ? (
+          <div className="py-8 text-center" style={{ color: 'var(--color-gh-text-muted)' }}>
+            {stats.placeholderMessage || 'Live GitHub statistics will be loaded through GitHub API integration.'}
+          </div>
+        ) : (
+          <>
+            <ContributionHeatmap weeks={stats.contributionWeeks || []} />
+            <RepoStats stats={stats} />
+          </>
+        )}
       </div>
     </section>
   );

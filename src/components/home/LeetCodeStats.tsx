@@ -18,67 +18,75 @@ export function LeetCodeStats() {
           border: "1px solid var(--color-gh-border)",
         }}
       >
-        {/* Top stats */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
-          <StatItem label="Solved" value={stats.totalSolved.toString()} />
-          <StatItem label="Contest Rating" value={stats.contestRating.toString()} />
-          <StatItem label="Ranking" value={stats.globalRanking} />
-          <StatItem
-            label="Current Streak"
-            value={`${stats.currentStreak}d`}
-            icon={<Flame size={14} style={{ color: "var(--color-gh-orange)" }} />}
-          />
-        </div>
+        {stats.liveData === false ? (
+          <div className="py-6 text-center" style={{ color: 'var(--color-gh-text-muted)' }}>
+            {stats.displaySummary || 'Live LeetCode statistics will be shown here after integration.'}
+          </div>
+        ) : (
+          <>
+            {/* Top stats */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+              <StatItem label="Solved" value={String(stats.totalSolved ?? 0)} />
+              <StatItem label="Contest Rating" value={String(stats.contestRating ?? 0)} />
+              <StatItem label="Ranking" value={stats.globalRanking || ''} />
+              <StatItem
+                label="Current Streak"
+                value={`${stats.currentStreak ?? 0}d`}
+                icon={<Flame size={14} style={{ color: "var(--color-gh-orange)" }} />}
+              />
+            </div>
 
-        {/* Difficulty breakdown */}
-        <div className="flex items-center gap-3 flex-wrap">
-          <DifficultyBadge
-            label="Easy"
-            count={stats.easySolved}
-            color="var(--color-gh-success)"
-          />
-          <DifficultyBadge
-            label="Medium"
-            count={stats.mediumSolved}
-            color="var(--color-gh-warning)"
-          />
-          <DifficultyBadge
-            label="Hard"
-            count={stats.hardSolved}
-            color="var(--color-gh-danger)"
-          />
-          <span
-            className="text-xs ml-auto"
-            style={{ color: "var(--color-gh-text-muted)" }}
-          >
-            Acceptance: {stats.acceptanceRate}
-          </span>
-        </div>
+            {/* Difficulty breakdown */}
+            <div className="flex items-center gap-3 flex-wrap">
+              <DifficultyBadge
+                label="Easy"
+                count={stats.easySolved ?? 0}
+                color="var(--color-gh-success)"
+              />
+              <DifficultyBadge
+                label="Medium"
+                count={stats.mediumSolved ?? 0}
+                color="var(--color-gh-warning)"
+              />
+              <DifficultyBadge
+                label="Hard"
+                count={stats.hardSolved ?? 0}
+                color="var(--color-gh-danger)"
+              />
+              <span
+                className="text-xs ml-auto"
+                style={{ color: "var(--color-gh-text-muted)" }}
+              >
+                Acceptance: {stats.acceptanceRate}
+              </span>
+            </div>
 
-        {/* Progress bar */}
-        <div
-          className="mt-3 h-2 rounded-full overflow-hidden flex"
-          style={{ backgroundColor: "var(--color-gh-elevated)" }}
-        >
-          <div
-            style={{
-              width: `${(stats.easySolved / stats.totalSolved) * 100}%`,
-              backgroundColor: "var(--color-gh-success)",
-            }}
-          />
-          <div
-            style={{
-              width: `${(stats.mediumSolved / stats.totalSolved) * 100}%`,
-              backgroundColor: "var(--color-gh-warning)",
-            }}
-          />
-          <div
-            style={{
-              width: `${(stats.hardSolved / stats.totalSolved) * 100}%`,
-              backgroundColor: "var(--color-gh-danger)",
-            }}
-          />
-        </div>
+            {/* Progress bar */}
+            <div
+              className="mt-3 h-2 rounded-full overflow-hidden flex"
+              style={{ backgroundColor: "var(--color-gh-elevated)" }}
+            >
+              <div
+                style={{
+                  width: `${((stats.easySolved ?? 0) / (stats.totalSolved ?? 1)) * 100}%`,
+                  backgroundColor: "var(--color-gh-success)",
+                }}
+              />
+              <div
+                style={{
+                  width: `${((stats.mediumSolved ?? 0) / (stats.totalSolved ?? 1)) * 100}%`,
+                  backgroundColor: "var(--color-gh-warning)",
+                }}
+              />
+              <div
+                style={{
+                  width: `${((stats.hardSolved ?? 0) / (stats.totalSolved ?? 1)) * 100}%`,
+                  backgroundColor: "var(--color-gh-danger)",
+                }}
+              />
+            </div>
+          </>
+        )}
       </div>
     </section>
   );
