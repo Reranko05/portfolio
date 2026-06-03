@@ -35,17 +35,15 @@ function findDaysArray(obj: any): { date: string; count: number }[] | null {
 function daysToWeeks(days: { date: string; count: number }[], lastDays = 365): ContributionWeek[] {
   if (!days || days.length === 0) return []
 
-  // Build a map of date -> count for quick lookup
   const dayMap = new Map<string, number>()
   days.forEach((d) => dayMap.set(d.date, d.count))
 
-  // Determine date range: end = last provided day, start = end - lastDays
-  const sorted = days.slice().sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-  const endDate = new Date(sorted[sorted.length - 1].date)
+  // Always end at today, not last contribution date
+  const endDate = new Date()
   const startDate = new Date(endDate)
   startDate.setDate(endDate.getDate() - lastDays + 1)
 
-  // Snap startDate back to previous Sunday so weeks start on Sunday
+  // Snap startDate back to previous Sunday
   while (startDate.getDay() !== 0) startDate.setDate(startDate.getDate() - 1)
 
   const allDays: { date: string; count: number }[] = []

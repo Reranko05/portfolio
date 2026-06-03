@@ -1,93 +1,177 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import type { ContributionWeek } from "@/types/github";
 
 const levelColors: Record<0 | 1 | 2 | 3 | 4, string> = {
-  0: "var(--color-gh-elevated)",
+  0: "#2d333b", // Default GitHub dark grey empty cell color
   1: "#0e4429",
   2: "#006d32",
   3: "#26a641",
   4: "#39d353",
 };
 
-const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const DISPLAY_DAYS = [
+  { label: "Mon", rowIndex: 1 },
+  { label: "Wed", rowIndex: 3 },
+  { label: "Fri", rowIndex: 5 },
+];
+
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 function getMonthLabels(weeks: ContributionWeek[]) {
   const labels: { label: string; col: number }[] = [];
-  let lastMonth = -1;
+  let previousMonth = -1;
 
-  weeks.forEach((week, i) => {
-    const date = new Date(week.days[0]?.date || "");
-    const month = date.getMonth();
-    if (month !== lastMonth) {
-      labels.push({ label: MONTHS[month], col: i });
-      lastMonth = month;
+  weeks.forEach((week, weekIndex) => {
+    const validDay = week.days.find((d) => d.date);
+    if (!validDay) return;
+
+    const [, monthStr] = validDay.date.split("-").map(Number);
+    const month = monthStr - 1;
+
+    if (month !== previousMonth) {
+      if (weekIndex === 0 || weekIndex - (labels[labels.length - 1]?.col || 0) > 2) {
+        labels.push({
+          label: MONTHS[month],
+          col: weekIndex,
+        });
+        previousMonth = month;
+      }
     }
   });
 
   return labels;
 }
 
-export function ContributionHeatmap({ weeks }: { weeks: ContributionWeek[] }) {
-  const monthLabels = getMonthLabels(weeks);
-  const totalContributions = weeks
+interface ContributionHeatmapProps {
+  weeks: ContributionWeek[];
+}
+
+export function ContributionHeatmap({ weeks: rawWeeksFromProps }: ContributionHeatmapProps) {
+  const [processedWeeks, setProcessedWeeks] = useState<ContributionWeek[]>([]);
+
+  useEffect(() => {
+    const contributionMap: Record<string, { count: number; level: number }> = {};
+
+    if (rawWeeksFromProps) {
+      rawWeeksFromProps.flatMap(w => w.days).forEach(day => {
+        if (day?.date) {
+          contributionMap[day.date] = {
+            count: day.count || 0,
+            level: day.level || 0,
+          };
+        }
+      });
+    }
+
+    const today = new Date();
+
+    // Start exactly 1 year ago from today (not from 1st of month)
+    const oneYearAgo = new Date(today.getFullYear() - 1, today.getMonth(), today.getDate());
+
+    // Roll back to Sunday before oneYearAgo
+    const currentTracker = new Date(oneYearAgo);
+    currentTracker.setDate(currentTracker.getDate() - currentTracker.getDay());
+
+    const rollingWeeks: ContributionWeek[] = [];
+    let currentWeek: ContributionWeek = { days: [] };
+
+    while (currentTracker <= today) {
+      const y = currentTracker.getFullYear();
+      const m = String(currentTracker.getMonth() + 1).padStart(2, "0");
+      const d = String(currentTracker.getDate()).padStart(2, "0");
+      const dateString = `${y}-${m}-${d}`;
+
+      const dayData = contributionMap[dateString] || { count: 0, level: 0 };
+
+      currentWeek.days.push({
+        date: dateString,
+        count: dayData.count,
+        level: dayData.level as any,
+      });
+
+      if (currentWeek.days.length === 7) {
+        rollingWeeks.push(currentWeek);
+        currentWeek = { days: [] };
+      }
+
+      currentTracker.setDate(currentTracker.getDate() + 1);
+    }
+
+    // Push any remaining days in the last partial week
+    if (currentWeek.days.length > 0) {
+      rollingWeeks.push(currentWeek);
+    }
+
+    setProcessedWeeks(rollingWeeks);
+  }, [rawWeeksFromProps]);
+
+  if (processedWeeks.length === 0) {
+    return <div className="w-full h-[110px] bg-[#0d1117] rounded-md animate-pulse border border-[#30363d]" />;
+  }
+
+  const monthLabels = getMonthLabels(processedWeeks);
+  const totalContributions = processedWeeks
     .flatMap((w) => w.days)
-    .reduce((sum, d) => sum + d.count, 0);
+    .reduce((sum, d) => sum + (d.count || 0), 0);
+
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-2">
-        <span className="text-xs" style={{ color: "var(--color-gh-text-muted)" }}>
+    <div className="font-sans select-none text-[#e6edf3] w-full">
+      <div className="mb-2">
+        <span className="text-sm font-normal text-[#848d97]">
           {totalContributions.toLocaleString()} contributions in the last year
         </span>
       </div>
 
-      {/* Heatmap grid */}
-      <div className="overflow-x-auto">
-        <div style={{ minWidth: "660px" }}>
-          {/* Month labels */}
-          <div
-            className="flex text-xs mb-1"
-            style={{ marginLeft: "28px", color: "var(--color-gh-text-muted)" }}
-          >
+      <div className="overflow-x-auto text-[12px] pb-1">
+        <div className="relative flex flex-col pt-5">
+          
+          {/* Month Labels */}
+          <div className="absolute top-0 left-[28px] h-4 right-0 flex pointer-events-none">
             {monthLabels.map(({ label, col }) => (
               <span
                 key={`${label}-${col}`}
-                style={{ position: "relative", left: `${col * 13}px` }}
+                className="absolute text-[11px] text-[#848d97]"
+                style={{ left: `${col * 12}px` }}
               >
                 {label}
               </span>
             ))}
           </div>
 
-          <div className="flex gap-1">
-            {/* Day labels */}
-            <div className="flex flex-col gap-0.5 pr-1">
-              {DAYS.map((day, i) => (
+          <div className="flex gap-[4px] mt-1">
+            {/* Weekday Sidebar */}
+            <div className="relative w-[24px] h-[82px] text-[#848d97]">
+              {DISPLAY_DAYS.map(({ label, rowIndex }) => (
                 <span
-                  key={day}
-                  className="text-xs h-3 leading-3 text-right"
+                  key={label}
+                  className="absolute text-[11px] text-right right-1"
                   style={{
-                    color: "var(--color-gh-text-muted)",
-                    fontSize: "10px",
-                    width: "24px",
-                    opacity: i % 2 === 0 ? 1 : 0,
+                    top: `${rowIndex * 12}px`,
+                    lineHeight: "10px",
                   }}
                 >
-                  {day}
+                  {label}
                 </span>
               ))}
             </div>
 
-            {/* Weeks */}
-            <div className="flex gap-0.5">
-              {weeks.map((week, wi) => (
-                <div key={wi} className="flex flex-col gap-0.5">
+            {/* Heatmap Grid */}
+            <div className="flex gap-[2px]">
+              {processedWeeks.map((week, wi) => (
+                <div key={wi} className="flex flex-col gap-[2px]">
                   {week.days.map((day, di) => (
                     <div
                       key={di}
-                      className="heatmap-cell w-3 h-3 rounded-sm"
-                      title={`${day.count} contributions on ${day.date}`}
-                      style={{ backgroundColor: levelColors[day.level] }}
+                      title={day.count > 0 ? `${day.count} contributions on ${day.date}` : `No contributions on ${day.date}`}
+                      style={{
+                        width: "10px",
+                        height: "10px",
+                        borderRadius: "2px",
+                        backgroundColor: levelColors[day.level],
+                      }}
                     />
                   ))}
                 </div>
@@ -95,17 +179,18 @@ export function ContributionHeatmap({ weeks }: { weeks: ContributionWeek[] }) {
             </div>
           </div>
 
-          {/* Legend */}
-          <div
-            className="flex items-center justify-end gap-1 mt-2 text-xs"
-            style={{ color: "var(--color-gh-text-muted)" }}
-          >
+          {/* Scale Legend Footer */}
+          <div className="flex items-center justify-end gap-1 mt-3 mr-2 text-[11px] text-[#848d97]">
             <span>Less</span>
             {([0, 1, 2, 3, 4] as const).map((l) => (
               <div
                 key={l}
-                className="w-3 h-3 rounded-sm"
-                style={{ backgroundColor: levelColors[l] }}
+                style={{
+                  width: "10px",
+                  height: "10px",
+                  borderRadius: "2px",
+                  backgroundColor: levelColors[l],
+                }}
               />
             ))}
             <span>More</span>
