@@ -4,7 +4,7 @@
 //   - Search projects (query all projects by name/tech)
 //   - Open resume (/resume)
 //   - Open GitHub (https://github.com/Reranko05)
-//   - Open LinkedIn (https://linkedin.com/in/aaditya-srinivasan)
+//   - Open LinkedIn (https://linkedin.com/in/aaditya-srinivasan03)
 //
 // Activation: Ctrl+K (or Cmd+K on macOS)
 // Gated by: features.SHOW_COMMAND_PALETTE

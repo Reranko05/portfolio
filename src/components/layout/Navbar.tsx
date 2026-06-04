@@ -21,7 +21,7 @@ const externalLinks = [
     icon: GithubIcon,
   },
   {
-    href: "https://linkedin.com/in/aaditya-srinivasan",
+    href: "https://linkedin.com/in/aaditya-srinivasan03",
     label: "LinkedIn",
     icon: LinkedinIcon,
   },
