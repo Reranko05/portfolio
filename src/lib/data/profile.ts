@@ -9,7 +9,7 @@ export const profile = {
   avatar: '/avatar.png',
   socials: {
     github: 'https://github.com/Reranko05',
-    linkedin: 'https://www.linkedin.com/in/aaditya-srinivasan/',
+    linkedin: 'https://www.linkedin.com/in/aaditya-srinivasan03/',
     resume: '/resume.pdf',
   },
   currentFocus: [
